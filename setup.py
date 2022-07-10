@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 DESCRIPTION = "Support file for ece4078 practicals content"
 
 
@@ -12,6 +12,7 @@ setup(
     description=DESCRIPTION,
     packages=find_packages("src"),
     package_dir={"": "src"},
+    package_data={'': ['install_nginx', 'nginx-meshcat-proxy.conf']},
     install_requires=[],
     include_package_data=True
 )
