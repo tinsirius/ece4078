@@ -10,6 +10,7 @@ import sys
 import errno
 from urllib.parse import urlparse
 from IPython.display import display, HTML
+import pickle
 
 def Set2DView(vis, scale = 30):
     vis['/Grid'].set_property('visible', False)
@@ -111,7 +112,7 @@ def _install_deepnote_nginx():
         print("no nginx installation script available")
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), script_dir)
 
-def _start_meshcat_deepnote(restart_nginx=False):
+def _start_meshcat_deepnote_nginx(restart_nginx=False):
     """Returns a Meshcat object suitable for use on Deepnote's cloud.
     """
     host = os.environ["DEEPNOTE_PROJECT_ID"]
@@ -123,8 +124,25 @@ def _start_meshcat_deepnote(restart_nginx=False):
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
+def _start_meshcat_deepnote_pickle(data):
+    """Returns a Meshcat object suitable for use on Deepnote's cloud.
+    Set by the address defined in init.ipynb
+    """
+    web_url = data['web_url']
+    zmq_url = data['zmq_url']
+    vis = meshcat.Visualizer(zmq_url)
+    display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{web_url}' target='_blank'>{web_url}</a>"))
 
-def StartMeshcat():
+    return vis
+
+def _start_meshcat_vanilla():
+    vis = meshcat.Visualizer()
+    url = vis.url()
+    display(HTML(f"Meshcat URL if you are on local machine: <a href='{url}' target='_blank'>{url}</a>"))
+    return vis
+
+
+def StartMeshcat(nginx = False):
     """
     Constructs a Meshcat instance, with extra support for Deepnote.
 
@@ -136,10 +154,19 @@ def StartMeshcat():
     port. To access it, you must enable "Allow incoming connections" in the
     Environment settings pane.
     """
+    try:
+        data = pickle.load(
+            open(os.path.expanduser('~')+'/.deepnote_meshcat.conf', "rb"))
+    except (OSError, IOError) as e:
+        data = None
+
     if "DEEPNOTE_PROJECT_ID" in os.environ:
-        return _start_meshcat_deepnote()
+        if nginx:
+            return _start_meshcat_deepnote_nginx()
+        else:
+            if data is not None:
+                return _start_meshcat_deepnote_pickle()
+            else:
+                return _start_meshcat_vanilla()
     else:
-        vis = meshcat.Visualizer()
-        url = vis.url()
-        display(HTML(f"Meshcat URL if you are on local machine: <a href='{url}' target='_blank'>{url}</a>"))
-        return vis
+        return _start_meshcat_vanilla()
