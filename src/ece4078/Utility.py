@@ -165,7 +165,7 @@ def StartMeshcat(nginx = False):
             return _start_meshcat_deepnote_nginx()
         else:
             if data is not None:
-                return _start_meshcat_deepnote_pickle()
+                return _start_meshcat_deepnote_pickle(data)
             else:
                 return _start_meshcat_vanilla()
     else:
