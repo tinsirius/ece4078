@@ -12,20 +12,26 @@ from urllib.parse import urlparse
 from IPython.display import display, HTML
 import pickle
 
-def Set2DView(vis, scale = 30):
+def Set2DView(vis, scale = 30, center = None):
     vis['/Grid'].set_property('visible', False)
     vis['/Background'].set_property("top_color", [1, 1, 1])
-    vis['/Background'].set_property("bottom_color", [1, 1, 1]) 
+    vis['/Background'].set_property("bottom_color", [1, 1, 1])
+    vis["/Lights/PointLightNegativeX/<object>"].set_property("intensity", 0.0)
+    vis["/Lights/PointLightPositiveX/<object>"].set_property("intensity", 0.0)
     a = np.array(   [[ 1.,  0.,  0., 0.],
                     [ 0.,  1.,  0., 0.],
                     [ 0.,  0.,  1., scale*1.0],
                     [ 0.,  0.,  0.,  1.]])
-
-    camera = g.OrthographicCamera(left = -scale, right = scale, top = scale, bottom = -scale, near = -1000, far = 1000)
+    if center is None:
+        camera = g.OrthographicCamera(left = -scale, right = scale, top = scale, bottom = -scale, near = -1000, far = 1000)
+    else:
+        camera = g.OrthographicCamera(left = center[0], right = center[1], 
+                                      top = center[2], bottom = center[3], 
+                                      near = -1000, far = 1000)
+        
     vis['/Cameras/default/rotated'].set_object(camera)
     vis['/Cameras/default'].set_transform(a)
-    vis['/Cameras/default/rotated/<object>'].set_property('position', [0.0, 0.0
-    , 0.0])
+    vis['/Cameras/default/rotated/<object>'].set_property('position', [0.0, 0.0, 0.0])
 
 def Set3DView(vis, pos = [2.0, 1.0, -1.0]):
     camera = g.PerspectiveCamera()
