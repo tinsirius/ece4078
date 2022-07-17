@@ -11,74 +11,97 @@ import errno
 from urllib.parse import urlparse
 from IPython.display import display, HTML
 import pickle
+import ipywidgets as widgets
 
-def Set2DView(vis, scale = 30, center = None):
-    vis['/Grid'].set_property('visible', False)
-    vis['/Background'].set_property("top_color", [1, 1, 1])
-    vis['/Background'].set_property("bottom_color", [1, 1, 1])
-    vis["/Lights/PointLightNegativeX/<object>"].set_property("intensity", 0.0)
-    vis["/Lights/PointLightPositiveX/<object>"].set_property("intensity", 0.0)
-    a = np.array(   [[ 1.,  0.,  0., 0.],
-                    [ 0.,  1.,  0., 0.],
-                    [ 0.,  0.,  1., scale*1.0],
-                    [ 0.,  0.,  0.,  1.]])
-    if center is None:
-        camera = g.OrthographicCamera(left = -scale, right = scale, top = scale, bottom = -scale, near = -1000, far = 1000)
-    else:
-        camera = g.OrthographicCamera(left = center[0], right = center[1], 
-                                      top = center[2], bottom = center[3], 
-                                      near = -1000, far = 1000)
+
+class ece4078_viz(meshcat.Visualizer):
+
+    def Set2DView(self, scale = 30, center = None):
+        self['/Grid'].set_property('visible', False)
+        self['/Background'].set_property("top_color", [1, 1, 1])
+        self['/Background'].set_property("bottom_color", [1, 1, 1])
+        self["/Lights/PointLightNegativeX/<object>"].set_property("intensity", 0.0)
+        self["/Lights/PointLightPositiveX/<object>"].set_property("intensity", 0.0)
+        a = np.array(   [[ 1.,  0.,  0., 0.],
+                        [ 0.,  1.,  0., 0.],
+                        [ 0.,  0.,  1., scale*1.0],
+                        [ 0.,  0.,  0.,  1.]])
+        if center is None:
+            camera = g.OrthographicCamera(left = -scale, right = scale, top = scale, bottom = -scale, near = -1000, far = 1000)
+        else:
+            camera = g.OrthographicCamera(left = center[0], right = center[1], 
+                                        top = center[2], bottom = center[3], 
+                                        near = -1000, far = 1000)
         
-    vis['/Cameras/default/rotated'].set_object(camera)
-    vis['/Cameras/default'].set_transform(a)
-    vis['/Cameras/default/rotated/<object>'].set_property('position', [0.0, 0.0, 0.0])
+        self['/Cameras/default/rotated'].set_object(camera)
+        self['/Cameras/default'].set_transform(a)
+        self['/Cameras/default/rotated/<object>'].set_property('position', [0.0, 0.0, 0.0])
 
-def Set3DView(vis, pos = [2.0, 1.0, -1.0]):
-    camera = g.PerspectiveCamera()
-    vis['/Cameras/default/rotated'].set_object(camera)
-    vis['/Cameras/default'].set_transform(np.identity(4))
-    vis['/Cameras/default/rotated/<object>'].set_property('position', pos) # y, z, x
-    vis['/Grid'].set_property('visible', True)
+    def Set3DView(self, pos = [2.0, 1.0, -1.0]):
+        camera = g.PerspectiveCamera()
+        self['/Cameras/default/rotated'].set_object(camera)
+        self['/Cameras/default'].set_transform(np.identity(4))
+        self['/Cameras/default/rotated/<object>'].set_property('position', pos) # y, z, x
+        self['/Grid'].set_property('visible', True)
 
-def add_thick_triad(vis, name, opacity = 1.0, thickness = 0.01, length = 0.5):
-    axes = ['z', 'y', 'x']
-    colors = [0x0000ff, 0x00ff00, 0xff0000]
-    vis[name].delete()
-    for i in range(3):
-        rot_vector = [0]*3
-        rot_vector[i] = 1
-        trans_vector = [value * length/2 for value in rot_vector][::-1]
-        vis[name][axes[i]].set_object(
-                                    g.Cylinder(length, radius = thickness), 
-                                    g.MeshLambertMaterial(
-                                        color=colors[i],
-                                        opacity = opacity)
-                                    )
-        vis[name][axes[i]].set_transform(
-                tf.translation_matrix(trans_vector)
-                @ tf.rotation_matrix(np.pi/2, rot_vector)
-            )
+    def ResetView(self):
+        self.Set3DView(pos = [5.0, 1.0, 0])
+        self['/Background'].set_property("top_color", [135.0/255, 206.0/255, 250.0/255])
+        self['/Background'].set_property("bottom_color", [25.0/255, 25.0/255, 112.0/255])
 
-    vis[name]["origin"].set_object(g.Sphere(2 * thickness), g.MeshLambertMaterial(
-                                color=0x000000,
-                                opacity = opacity))
+    def setPNGView(self, scale, center = None):
+        self.Set2DView(scale, center)
+        self["/Lights/PointLightNegativeX/<object>"].set_property("intensity", 0.5)
+        self["/Lights/PointLightPositiveX/<object>"].set_property("intensity", 0.5)
+        self["/Lights/FillLight/<object>"].set_property("intensity", 0.5)
 
-    return vis[name]
-
-def printMatrix(vis, rot, size, pos = np.identity(4)):
-    if rot.ndim == 2:
-        for i, row in enumerate(rot):
-            vis["print"]["row" + str(i)].set_transform(
-                tf.translation_matrix([size/2, size/2 - i*size/10, 0])
+    def add_thick_triad(self, name, opacity = 1.0, thickness = 0.01, length = 0.5):
+        axes = ['z', 'y', 'x']
+        colors = [0x0000ff, 0x00ff00, 0xff0000]
+        self[name].delete()
+        for i in range(3):
+            rot_vector = [0]*3
+            rot_vector[i] = 1
+            trans_vector = [value * length/2 for value in rot_vector][::-1]
+            self[name][axes[i]].set_object(
+                                        g.Cylinder(length, radius = thickness), 
+                                        g.MeshLambertMaterial(
+                                            color=colors[i],
+                                            opacity = opacity)
+                                        )
+            self[name][axes[i]].set_transform(
+                    tf.translation_matrix(trans_vector)
+                    @ tf.rotation_matrix(np.pi/2, rot_vector)
                 )
 
-            vis["print"]["row" + str(i)].set_object(g.SceneText(str(np.round(rot[i, :], 2)), 
-                                        width=size,
-                                        height=size, 
-                                        font_size = size))
-        vis['print'].set_transform(pos)
-    else:
-        pass
+        self[name]["origin"].set_object(g.Sphere(2 * thickness), g.MeshLambertMaterial(
+                                    color=0x000000,
+                                    opacity = opacity))
+
+        return self[name]
+
+    def printMatrix(self, rot, size, pos = np.identity(4)):
+        if rot.ndim == 2:
+            for i, row in enumerate(rot):
+                self["print"]["row" + str(i)].set_transform(
+                    tf.translation_matrix([size/2, size/2 - i*size/10, 0])
+                    )
+
+                self["print"]["row" + str(i)].set_object(g.SceneText(str(np.round(rot[i, :], 2)), 
+                                            width=size,
+                                            height=size, 
+                                            font_size = size))
+            self['print'].set_transform(pos)
+        else:
+            pass
+
+    def show_inline(self, height = 400):
+        return widgets.HTML("""
+            <div style="height: {height}px; width: 100%; overflow-x: auto; overflow-y: hidden; resize: both">
+            <iframe src="{url}" style="width: 100%; height: 100%; border: none"></iframe>
+            </div>
+            """.format(url=self.ece4078_url, height=height))
+
 
 # The following functions are HEAVILY inspired (i.e. copypasta) from Russ Tedrake's team
 # https://github.com/RobotLocomotion/drake/blob/master/bindings/pydrake/_geometry_extra.py
@@ -124,9 +147,10 @@ def _start_meshcat_deepnote_nginx(restart_nginx=False):
     host = os.environ["DEEPNOTE_PROJECT_ID"]
     if restart_nginx or not _is_listening(8080):
         _install_deepnote_nginx()
-    vis = meshcat.Visualizer()
+    vis = ece4078_viz()
     port = urlparse(vis.url()).port
     url = f"https://{host}.deepnoteproject.com/{port}/static/"
+    vis.ece4078_url = url
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
@@ -136,14 +160,16 @@ def _start_meshcat_deepnote_pickle(data):
     """
     web_url = data['web_url']
     zmq_url = data['zmq_url']
-    vis = meshcat.Visualizer(zmq_url)
+    vis = ece4078_viz(zmq_url)
+    vis.ece4078_url = web_url
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{web_url}' target='_blank'>{web_url}</a>"))
 
     return vis
 
 def _start_meshcat_vanilla():
-    vis = meshcat.Visualizer()
+    vis = ece4078_viz()
     url = vis.url()
+    vis.ece4078_url = url
     display(HTML(f"Meshcat URL if you are on local machine: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
