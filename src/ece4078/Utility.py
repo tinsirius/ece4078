@@ -46,11 +46,13 @@ class ece4078_viz(meshcat.Visualizer):
 
     def ResetView(self):
         self.Set3DView(pos = [5.0, 1.0, 0])
+        self["/Axes"].set_property('visible', True)
         self['/Background'].set_property("top_color", [135.0/255, 206.0/255, 250.0/255])
         self['/Background'].set_property("bottom_color", [25.0/255, 25.0/255, 112.0/255])
 
     def setPNGView(self, scale, center = None):
         self.Set2DView(scale, center)
+        self["/Axes"].set_property('visible', False)
         self["/Lights/PointLightNegativeX/<object>"].set_property("intensity", 0.5)
         self["/Lights/PointLightPositiveX/<object>"].set_property("intensity", 0.5)
         self["/Lights/FillLight/<object>"].set_property("intensity", 0.5)
