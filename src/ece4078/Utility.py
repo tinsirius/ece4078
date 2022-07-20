@@ -97,12 +97,25 @@ class ece4078_viz(meshcat.Visualizer):
         else:
             pass
 
+    def init_inline(self, url):
+        self.ece4078_url = url
+        self.init_inline = False
+
     def show_inline(self, height = 400):
-        return widgets.HTML("""
-            <div style="height: {height}px; width: 100%; overflow-x: auto; overflow-y: hidden; resize: both">
-            <iframe src="{url}" style="width: 100%; height: 100%; border: none"></iframe>
-            </div>
-            """.format(url=self.ece4078_url, height=height))
+        HTML_string = """
+                <div style="height: {height}px; width: 100%; overflow-x: auto; overflow-y: hidden; resize: both">
+                <iframe src="{url}" style="width: 100%; height: 100%; border: none"></iframe>
+                </div>
+                """.format(url=self.ece4078_url, height=height)
+
+        if not self.init_inline:
+            self.HTML_widgets = widgets.HTML(HTML_string)
+            self.init_inline = True
+        else:
+            self.HTML_widgets.close()
+            self.HTML_widgets = widgets.HTML(HTML_string)
+
+        return self.HTML_widgets
 
 
 # The following functions are HEAVILY inspired (i.e. copypasta) from Russ Tedrake's team
@@ -152,7 +165,7 @@ def _start_meshcat_deepnote_nginx(restart_nginx=False):
     vis = ece4078_viz()
     port = urlparse(vis.url()).port
     url = f"https://{host}.deepnoteproject.com/{port}/static/"
-    vis.ece4078_url = url
+    vis.init_inline(url)
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
@@ -163,7 +176,7 @@ def _start_meshcat_deepnote_pickle(data):
     web_url = data['web_url']
     zmq_url = data['zmq_url']
     vis = ece4078_viz(zmq_url)
-    vis.ece4078_url = web_url
+    vis.init_inline(web_url)
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{web_url}' target='_blank'>{web_url}</a>"))
 
     return vis
@@ -171,7 +184,7 @@ def _start_meshcat_deepnote_pickle(data):
 def _start_meshcat_vanilla():
     vis = ece4078_viz()
     url = vis.url()
-    vis.ece4078_url = url
+    vis.init_inline(url)
     display(HTML(f"Meshcat URL if you are on local machine: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
