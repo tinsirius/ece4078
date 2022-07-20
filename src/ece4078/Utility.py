@@ -97,7 +97,7 @@ class ece4078_viz(meshcat.Visualizer):
         else:
             pass
 
-    def init_inline(self, url):
+    def initialize_inline(self, url):
         self.ece4078_url = url
         self.init_inline = False
 
@@ -165,7 +165,7 @@ def _start_meshcat_deepnote_nginx(restart_nginx=False):
     vis = ece4078_viz()
     port = urlparse(vis.url()).port
     url = f"https://{host}.deepnoteproject.com/{port}/static/"
-    vis.init_inline(url)
+    vis.initialize_inline(url)
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
@@ -176,7 +176,7 @@ def _start_meshcat_deepnote_pickle(data):
     web_url = data['web_url']
     zmq_url = data['zmq_url']
     vis = ece4078_viz(zmq_url)
-    vis.init_inline(web_url)
+    vis.initialize_inline(web_url)
     display(HTML(f"Meshcat URL if you are on Deepnote: <a href='{web_url}' target='_blank'>{web_url}</a>"))
 
     return vis
@@ -184,7 +184,7 @@ def _start_meshcat_deepnote_pickle(data):
 def _start_meshcat_vanilla():
     vis = ece4078_viz()
     url = vis.url()
-    vis.init_inline(url)
+    vis.initialize_inline(url)
     display(HTML(f"Meshcat URL if you are on local machine: <a href='{url}' target='_blank'>{url}</a>"))
     return vis
 
