@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from IPython.display import display, HTML
 import pickle
 import ipywidgets as widgets
+import signal
 
 
 class ece4078_viz(meshcat.Visualizer):
@@ -131,6 +132,27 @@ class ece4078_viz(meshcat.Visualizer):
             g.LineBasicMaterial(vertexColors=True)))
 
         return self["origin_mask"]
+
+def _eval_timeout_print_str():
+    return """
+import signal
+def eval_timeout_print(statement_str):
+    def handler(signum, frame):
+        raise Exception("Infinite Loop")
+    signal.alarm(5)
+    signal.signal(signal.SIGALRM, handler)
+    sys.stdout.write('skip '); result = eval(statement_str) # doctest:+ELLIPSIS
+    signal.alarm(0)
+    return result
+"""    
+
+def enumerate_pickle(pickle_list, path = "pickle/"):
+    l = [] 
+    for my_pickle in pickle_list:
+        a_file = open(path + my_pickle, "rb")
+        pk_result = pickle.load(a_file)
+        l.append(pk_result)
+    return l
 
 
 # The following functions are HEAVILY inspired (i.e. copypasta) from Russ Tedrake's team
