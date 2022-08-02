@@ -117,6 +117,21 @@ class ece4078_viz(meshcat.Visualizer):
 
         return self.HTML_widgets
 
+    def mask_origin(self):
+        self["origin_mask"].set_object(g.LineSegments(
+            g.PointsGeometry(position=np.array([
+                [0, 0, 0], [0.5, 0, 0],
+                [0, 0, 0], [0, 0.5, 0],
+                [0, 0, 0], [0, 0, 0.5]]).astype(np.float32).T,
+                color=np.array([
+                [0, 0, 0], [0, 0, 0],
+                [0, 0, 0], [0, 0, 0],
+                [0, 0, 0], [0, 0, 0]]).astype(np.float32).T
+            ),
+            g.LineBasicMaterial(vertexColors=True)))
+
+        return self["origin_mask"]
+
 
 # The following functions are HEAVILY inspired (i.e. copypasta) from Russ Tedrake's team
 # https://github.com/RobotLocomotion/drake/blob/master/bindings/pydrake/_geometry_extra.py
