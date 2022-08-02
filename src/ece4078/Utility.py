@@ -135,7 +135,7 @@ class ece4078_viz(meshcat.Visualizer):
 
 def _eval_timeout_print_str():
     return """
-import signal
+import signal, sys
 def eval_timeout_print(statement_str):
     def handler(signum, frame):
         raise Exception("Infinite Loop")
