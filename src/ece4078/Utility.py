@@ -13,6 +13,7 @@ from IPython.display import display, HTML
 import pickle
 import ipywidgets as widgets
 import signal
+import otter
 
 
 class ece4078_viz(meshcat.Visualizer):
@@ -254,3 +255,19 @@ def StartMeshcat(nginx = False):
                 return _start_meshcat_vanilla()
     else:
         return _start_meshcat_vanilla()
+
+def pretty_print_otter(result):
+    for q_name in result.results:
+        q_result = result.results[q_name]
+        fail_print = []
+        for case in list(q_result.test_case_results):
+            if case.passed:
+                continue
+            else:
+                fail_print.append(case.test_case.failure_message)
+        if not fail_print:
+            print(f"{q_name}: Good Job!\n")
+        else:
+            print(f"{q_name}: Did not pass test case(s), probably for the following reasons:\n")
+            print(*[f"\t- " + s for s in fail_print])
+            print()

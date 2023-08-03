@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '1.0.9'
+VERSION = '1.0.10'
 DESCRIPTION = "Support file for ece4078 practicals content"
 
 
