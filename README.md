@@ -1,13 +1,12 @@
 # ece4078
 Support files for ECE4078 Practicals
 
-Please install manually with
+You can no longer install with `pythhon3 setup.py install`. Here is how you can install manually
+
 ```
-python3 setup.py install 
-```
-Or if you want to install it to your current user only
-```
-python3 setup.py install --user
+python3 setup.py sdist
+cd dist
+pip install ...tar.gz
 ```
 
 This repo is also hosted on PyPi, however, it will not always get the newest fix :P, and I did not put all of the dependencies in the `install_requires` tag so use it at your own risk!
