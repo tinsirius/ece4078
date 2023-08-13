@@ -53,12 +53,14 @@ class Render_class():
 
 
         if self.add_aruco:
-            marker_files = [filename for filename in os.listdir('Practical04_Support/images') if filename.startswith("M")]
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            imgs_folder_path = os.path.join(current_dir, "images")
+            marker_files = [filename for filename in os.listdir(imgs_folder_path) if filename.startswith("M")]
             marker_world_width = 0.3
             for i,filename in enumerate(sorted(marker_files)):
                 fprts = filename.split('_')
                 mp = np.array([float(fprts[1]),float(fprts[2])])
-                mi = plt.imread('Practical04_Support/images/'+filename)
+                mi = plt.imread(imgs_folder_path+'/'+filename)
                 ext = [mp[0]-marker_world_width/2,mp[0]+marker_world_width/2,\
                 mp[1]-marker_world_width/2,mp[1]+marker_world_width/2]
                 plt.imshow(mi,extent=ext)
@@ -197,11 +199,11 @@ class video_Render(Render_class):
         self.init_plot()
         plt.close()
         
-    def render_video(self):
+    def render_video(self, skip = 1):
         def render(frame):
-            self.cur_frame = frame
+            self.cur_frame = np.clip(frame*skip, 0, self.state.shape[0] - 1)
             self.step_render()
-        anim = FuncAnimation(self.figure, render, frames=self.state.shape[0], interval=200)
+        anim = FuncAnimation(self.figure, render, frames=int(np.floor((self.state.shape[0] + skip)/skip)), interval=200 + 10 * skip)
         return anim
 
 
