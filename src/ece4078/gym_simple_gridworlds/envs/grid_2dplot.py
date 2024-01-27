@@ -108,7 +108,7 @@ def plot_value_function(grid_env, value_function, ax=None):
     return ax
 
 
-def plot_policy(grid_env, policy):
+def plot_policy(grid_env, policy, ax=None):
     """
     Generate plot of a given policy for a grid world environment
     :param grid_env: Environment
@@ -121,8 +121,8 @@ def plot_policy(grid_env, policy):
               }
 
     height, width = grid_env.grid.shape
-
-    fig, ax = plt.subplots(figsize=(4, 4))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(4, 4))
 
     # Draw grid outline
     for col in range(width + 1):
@@ -178,4 +178,4 @@ def plot_policy(grid_env, policy):
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
 
-    return fig, ax
+    return ax
