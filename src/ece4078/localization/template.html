@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Plotly viewer</title>
+  <script src="https://cdn.plot.ly/plotly-2.33.0.min.js"></script>
+  <style>
+    body{margin:0;font-family:sans-serif}
+    #wrap{max-width:820px;margin:20px auto;padding:0 10px}
+    #slider{width:70%}
+    #graph .modebar-container {
+      top:    auto    !important;
+      bottom: 0       !important;
+      right:  0       !important;
+    }
+  </style>
+</head>
+
+<body>
+  <button id="playBtn">Play/Pause</button>
+  <input type="range" id="slider" min="0" max="$N" step="1" value="0">
+  <span id="frameInfo">0 / $N</span>
+  
+  <div id="graph"></div>
+
+  <script>
+    const ORIGINAL_FIG = $fig_json;
+    const ORIGINAL_DATA = ORIGINAL_FIG.data;
+    const X = $X;
+    const Y = $Y;
+    const THETA = $THETA
+    const COV = $COV2x2;
+    const N = $N;
+    const GUESSES = $GUESSES;
+
+    let playing   = false;
+    let timerID   = null; 
+    const STEP_MS = 50;
+    const slider     = document.getElementById('slider');
+    const playBtn    = document.getElementById('playBtn');
+    const frameInfo  = document.getElementById('frameInfo');
+
+    function ellipsePath(cov, xc, yc) {
+      const [[a, b], [c, d]] = cov;
+      const B = -(a + d);
+      const C = a * d - b * c;
+      const D = Math.sqrt(B * B - 4 * C);
+      const l1 = (-B + D) / 2;
+      const l2 = (-B - D) / 2;
+      const vx = l1 - d,
+            vy = c,
+            phi = Math.atan2(vy, vx);
+      const s1 = l1 / 2,
+            s2 = l2 / 2,
+            n  = 30;
+
+      let p = '';
+      for (let i = 0; i <= n; i++) {
+        const t  = 2 * Math.PI * i / n;
+        const dx = s1 * Math.cos(t),
+              dy = s2 * Math.sin(t),
+              x  = xc + dx * Math.cos(phi) - dy * Math.sin(phi),
+              y  = yc + dx * Math.sin(phi) + dy * Math.cos(phi);
+        p += (i ? 'L' : 'M') + x + ',' + y;
+      }
+      return p + ' Z';
+    }
+
+
+    function draw(t) {
+      frameInfo.textContent = `$${t} / ${N}`;
+
+      const trace = {
+        x: X.slice(0, t + 1),
+        y: Y.slice(0, t + 1),
+        mode: 'lines',
+        line: { color: 'blue' },
+        name: "Predicted state (from model)"
+      };
+
+      const cosT = Math.cos(THETA[t]);
+      const sinT = Math.sin(THETA[t]);
+      const currX = X[t];
+      const currY = Y[t];
+
+      const buildCovShape = (cov, x, y) => ({
+        type: 'path',
+        path: ellipsePath(cov, x, y),
+        xref: 'x',
+        yref: 'y',
+        line: { color: 'indigo', width: 2 },
+        showlegend: true,
+        name: 'covariance'
+      });
+
+      const xAxisTrace = {
+        x: [currX, currX + 0.1 * cosT],
+        y: [currY, currY + 0.1 * sinT],
+        mode: 'lines',
+        line: { color: 'green', width: 2 },
+        hoverinfo: 'skip',
+        legendgroup: 'axes',
+        showlegend: true,
+        name: 'Current Robot State'
+      };
+
+      const yAxisTrace = {
+        x: [currX, currX - 0.1 * sinT],
+        y: [currY, currY + 0.1 * cosT],
+        mode: 'lines',
+        line: { color: 'red', width: 2 },
+        hoverinfo: 'skip',
+        legendgroup: 'axes',
+        showlegend: false,
+        name: 'Robot axis'
+      };
+
+      
+      const guessTraces = Object.entries(GUESSES[t] || {}).map(
+        ([tag, [gx, gy]], idx) => ({
+          x: [currX, currX + cosT * gx - sinT *gy],
+          y: [currY, currY + sinT * gx + cosT *gy],
+          mode: 'lines+markers+text',
+          line: { color: 'yellow', width: 2 },
+          textfont: { color: 'lime', size: 14 },
+          textposition: 'middle right',
+          text: ['', `<b>$${tag}</b>`],
+          legendgroup: 'guesses',
+          showlegend: idx === 0,
+          name: "Measurements"
+        })
+      );
+
+      Plotly.react(
+        'graph',
+        ORIGINAL_DATA.concat(trace, ...guessTraces, xAxisTrace, yAxisTrace),
+        { ...ORIGINAL_FIG.layout, shapes: [COV?.[t] && buildCovShape(COV[t], X[t], Y[t])].filter(Boolean), uirevision: 'myviewer'},
+        { ...ORIGINAL_FIG.layout, uirevision: 'myviewer'},
+        { displayModeBar: true }
+      );
+    }
+
+    function togglePlay() {
+      playing = !playing;
+      if (playing) {
+        timerID = setInterval(() => {
+          let next = +slider.value + 1;
+          if (next > +slider.max) { playing = false;}   
+          slider.value = next;
+          slider.dispatchEvent(new Event('input'));
+        }, STEP_MS);
+      } else {
+        clearInterval(timerID);
+      }
+    }
+
+    
+    Plotly.newPlot('graph', ORIGINAL_DATA, ORIGINAL_FIG.layout, { displayModeBar: true });
+    draw(0);
+
+    playBtn.addEventListener('click', togglePlay);
+    document.getElementById('slider')
+            .addEventListener('input', e => draw(+e.target.value));
+  </script>
+</body>
+</html>
