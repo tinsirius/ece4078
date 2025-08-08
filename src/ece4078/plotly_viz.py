@@ -3,6 +3,7 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.graph_objects as go
 import numpy as np
+import time
 
 class InteractiveApp:
 
@@ -39,6 +40,8 @@ class InteractiveApp:
     def run(self):
         self.app.run(jupyter_mode="external", host=self.host, port=self.port, debug=False, use_reloader=False)
 
+    def get_display_url(self):
+        return f"{self.display_url}?_={int(time.time())}"
 
 def NotebookChecker(ctx, compute_fn = None):
 
